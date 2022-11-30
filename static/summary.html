@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Summary</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.1/font/bootstrap-icons.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.7.13/dist/vue.js"></script>
+    </head>
+    <body>
+        <div class="d-flex flex-column w-100 h-100 fixed-top align-items-center justify-content-center" id="summary_bar">
+            <!----------------------------------------------------------------------------------------------------------->
+            <!------------------------------------------------------------------------------------------------------------------>
+            <div class="d-flex flex-row align-items-start" style="width: 90%;">
+                <div class="d-flex flex-row" style="width: 20%;">
+                    <label class="input-group-text">Scope</label>
+                    <select class="form-select" ref="scope" :disabled="submitted">
+                        <option value="past" selected>Past</option>
+                        <option value="upcoming">Upcoming</option>
+                    </select>
+                </div>
+                <div class="d-flex flex-row ms-2" style="width: 20%;">
+                    <label class="input-group-text">Select List</label>
+                    <select class="form-select" ref="taskid" :disabled="submitted">
+                        <option value="all" selected>All Lists</option>
+                        <option :value="list.id" v-for="list in lists">{{list.title}}</option>
+                    </select>
+                </div>
+                <div class="d-flex flex-row input-group ms-2" style="width: 20%;" >
+                    <label class="input-group-text">Duration</label>
+                    <input :disabled="submitted" value="7" type="number" class="form-control" ref="tscale" min="1" step="1" aria-describedby="input-group-left">
+                    <select class="form-select" ref="tunit" :disabled="submitted">
+                        <option value="hour">Hours</option>
+                        <option value="day" selected>Days</option>
+                        <option value="week">Weeks</option>
+                        <option value="month">Months</option>
+                    </select>
+                </div>
+                <div class="d-flex flex-row input-group ms-2" style="width: 20%;">
+                    <label class="input-group-text">Interval</label>
+                    <input :disabled="submitted" value="1" type="number" class="form-control" ref="rscale" min="1" step="1" aria-describedby="input-group-left">
+                    <select class="form-select" ref="runit" :disabled="submitted">
+                        <option value="hour">Hours</option>
+                        <option value="day" selected>Days</option>
+                        <option value="week">Weeks</option>
+                        <option value="month">Months</option>
+                    </select>
+                </div>
+
+                <a type="button" class="btn btn-secondary ms-4" v-on:click="reqdata">Request</a>
+
+            </div>
+            <div class="d-flex flex-row h-75 mt-4 justify-content-start" style="width: 90%;" ref="chart">
+                <div class="h-100 d-flex flex-column border-end border-4 border-dark justify-content-end" style="width: 5%;">
+                    <div class="w-100" style="height: 90%;" ref="yaxis">
+                        <div class="d-flex flex-row w-100 align-items-center justify-content-end" :style="vspace" v-for="yt in yticks">
+                            <div style="width: 80%; padding: 2px; font-size: small; width: 40px; text-align: center;">{{yt}}</div>
+                            <div style="height: 2px; width: 20%; background-color: black; border-color: black;"></div>
+                        </div>
+                    </div>
+                    <div class="w-100 border-top border-4 border-dark" style="height: 10%;"></div>
+                    <div style="height: 15px;"></div>
+                </div>
+                <div class="h-100 d-flex flex-row w-100" style="overflow-y: hidden; overflow-x: overlay;">
+                    <div class="h-100 d-flex flex-column" v-for="(label, li) in labels">
+                        <div style="height: 90%; background-color: lightgray;" class="d-flex flex-row justify-content-between">
+                            <div class="w-25 h-100 d-flex flex-column justify-content-end align-items-center">
+                                <span v-if="lh[li] !== 0">{{lh[li]}}</span>
+                                <div v-if="lh[li] !== 0" class="w-100 bg-success border border-1 border-dark" :style="lst(li)"></div>
+                            </div>
+                            <div class="w-25 h-100 d-flex flex-column justify-content-end align-items-center">
+                                <span v-if="rh[li] !== 0">{{rh[li]}}</span>
+                                <div v-if="rh[li] !== 0" class="w-100 border border-1 border-dark" :class="ifscope?'bg-primary':'bg-danger'" :style="rst(li)"></div>
+                            </div>
+                        </div>
+                        <div class="border-top border-4 border-dark d-flex flex-row justify-content-start" style="height: 10%;">
+                            <div class="h-100 d-flex flex-column justify-content-center align-items-center" :style="hspace">
+                                <div style="width: 2px; height: 20%; background-color: black; border-color: black;"></div>
+                                <div style="height: 80%; padding: 2px; font-size: small; width: 80px; text-align: center;">{{label}}</div>
+                            </div>
+                        </div>
+                        <div style="height: 15px;"></div>
+                    </div>
+                </div>
+            </div>
+            <a type="button" class="btn btn-primary mt-4" href="/">Back to Home</a>
+            <div class="border border-5 d-flex flex-column" style="position: fixed; top: 10px; right: 10px; width: fit-content; height: fit-content;">
+                <div class="d-flex flex-row justify-content-start align-items-center w-100 h-50 p-1" v-if="ifscope">
+                    <div class="bg-primary" style="height: 15px; width: 25px;"></div>
+                    <span class="ps-2" style="font-size: small;">Created Tasks</span>
+                </div>
+                <div class="d-flex flex-row justify-content-start align-items-center w-100 h-50 p-1" v-else>
+                    <div class="bg-danger" style="height: 15px; width: 25px;"></div>
+                    <span class="ps-2" style="font-size: small;">Due Tasks</span>
+                </div>
+                <div class="d-flex flex-row justify-content-start align-items-center w-100 h-50 p-1">
+                    <div class="bg-success" style="height: 15px; width: 25px;"></div>
+                    <span class="ps-2" style="font-size: small;">Completed Tasks</span>
+                </div> 
+            </div>
+            <div class="alert alert-danger" role="alert" v-show="show_alert" style="position: fixed; bottom: 20px; right: 20px; z-index: 100000;">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>{{stat_msg}}</span>
+            </div>
+        </div>
+    </body>
+    <script src="../static/summary.js"></script>
+
+</html>
+
+<!--
+
+-->
